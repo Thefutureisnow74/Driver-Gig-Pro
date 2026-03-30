@@ -44,6 +44,7 @@ const SVC_ALIASES = {
 const VEH_SHORT = { 'Car': 'car', 'SUV': 'SUV', 'Minivan': 'minivan', 'Pickup Truck': 'pickup truck', 'Cargo Van': 'cargo van', 'Box Truck': 'box truck', 'Semi-Truck': 'semi truck', 'Aircraft': 'aircraft', 'Bike / Scooter': 'bike' };
 
 function buildSuggestions(serviceTypes, vehicles, states) {
+  if (serviceTypes.length === 0) return [];
   const suggestions = [];
   const seen = new Set();
   const add = (text, cat) => {
@@ -51,7 +52,7 @@ function buildSuggestions(serviceTypes, vehicles, states) {
     if (!seen.has(key)) { seen.add(key); suggestions.push({ text, cat }); }
   };
 
-  const svcList = serviceTypes.length > 0 ? serviceTypes : ['delivery'];
+  const svcList = serviceTypes;
   const vehList = vehicles.length > 0 ? vehicles.map(v => VEH_SHORT[v] || v.toLowerCase()) : [];
   const stList = states.length > 0 ? states : [];
   const stateNames = stList.map(s => STATE_NAMES[s] || s);
@@ -407,6 +408,14 @@ export default function JobHunter({ companies, setCompanies, activities, setActi
 
         {/* Keyword Checklist */}
         <div data-testid="keyword-checklist" style={{ flex: 1, overflowY: 'auto', marginRight: -6, paddingRight: 6 }}>
+          {serviceTypes.length === 0 && customKeywords.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center', height: '100%' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f0ece4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, color: '#bbb', marginBottom: 14 }}>?</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, marginBottom: 6 }}>Select Service Types to Begin</div>
+              <div style={{ fontSize: 12, color: '#999', lineHeight: 1.6, maxWidth: 280 }}>Keywords are generated based on your Service Types, Vehicles, and Target States. Select at least one service type on the left to see suggestions.</div>
+              <div style={{ fontSize: 11, color: '#bbb', marginTop: 14 }}>Or add your own keywords above.</div>
+            </div>
+          ) : (<>
           {cats.filter(cat => !kwCat || kwCat === cat).map(cat => {
             const catKws = visibleKws.filter(k => k.cat === cat);
             if (catKws.length === 0) return null;
@@ -431,7 +440,9 @@ export default function JobHunter({ companies, setCompanies, activities, setActi
               </div>
             );
           })}
-          {visibleKws.length === 0 && <div style={{ textAlign: 'center', padding: '20px 0', color: '#bbb', fontSize: 12 }}>No keywords match your filter</div>}
+          {visibleKws.length === 0 && serviceTypes.length > 0 && <div style={{ textAlign: 'center', padding: '20px 0', color: '#bbb', fontSize: 12 }}>No keywords match your filter</div>}
+          </>
+          )}
         </div>
       </div>
     </div>
