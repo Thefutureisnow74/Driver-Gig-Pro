@@ -1,0 +1,136 @@
+{
+  "theme": "light",
+  "archetype": "1",
+  "archetype_name": "Organic & Earthy",
+  "design_philosophy": "A clean, highly functional, and professional dashboard. The design leverages warm earthy tones (cream, beige, tan) against a commanding, trust-inspiring Navy. It focuses on clarity, easy tracking, and quick interactions for gig drivers managing multiple applications and streams of income.",
+  "colors": {
+    "primary": "#1e2d5a",
+    "primary_hover": "#162244",
+    "primary_foreground": "#ffffff",
+    "accent": "#2563b8",
+    "accent_hover": "#1d4ed8",
+    "accent_foreground": "#ffffff",
+    "background": "#e8e4dc",
+    "surface": "#ffffff",
+    "surface_secondary": "#f2ede6",
+    "surface_tertiary": "#f5f0e6",
+    "text_primary": "#111827",
+    "text_secondary": "#4b5563",
+    "border": "#d1d5db",
+    "status": {
+      "success": "#059669",
+      "warning": "#d97706",
+      "error": "#dc2626",
+      "info": "#2563b8",
+      "high_priority": "#ef4444",
+      "medium_priority": "#f59e0b",
+      "low_priority": "#10b981",
+      "waiting": "#f59e0b",
+      "applied": "#3b82f6",
+      "active": "#10b981",
+      "overdue": "#ef4444"
+    }
+  },
+  "typography": {
+    "primary_font": "Inter",
+    "secondary_font": "Inter",
+    "heading_strategy": "Functional, clean, and tight spacing. Strong contrast against background.",
+    "sizes": {
+      "h1": "text-4xl font-bold tracking-tight text-slate-900",
+      "h2": "text-2xl font-semibold tracking-tight text-slate-900",
+      "h3": "text-xl font-medium tracking-tight text-slate-800",
+      "body": "text-base font-normal text-slate-700",
+      "small": "text-sm font-medium text-slate-600",
+      "tiny": "text-xs font-semibold uppercase tracking-wider text-slate-500"
+    }
+  },
+  "layout_and_spacing": {
+    "strategy": "Desktop-first minimum 1280px. Fixed left sidebar navigation, main content area, right panel for detail cards.",
+    "sidebar": {
+      "width": "w-64",
+      "background": "bg-[#1e2d5a]",
+      "text": "text-white"
+    },
+    "main_content": {
+      "background": "bg-[#e8e4dc]",
+      "padding": "p-8"
+    },
+    "cards": {
+      "background": "bg-[#ffffff]",
+      "radius": "rounded-xl",
+      "shadow": "shadow-sm",
+      "padding": "p-6",
+      "border": "border border-gray-200"
+    },
+    "panels": {
+      "background": "bg-[#f2ede6]",
+      "radius": "rounded-lg",
+      "padding": "p-4"
+    },
+    "pills": {
+      "background": "bg-[#f5f0e6]",
+      "text": "text-[#1e2d5a]",
+      "radius": "rounded-full",
+      "padding": "px-3 py-1"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#1e2d5a] text-white hover:bg-[#162244] transition-colors rounded-md px-4 py-2 font-medium shadow-sm",
+      "secondary": "bg-white text-[#1e2d5a] border border-[#1e2d5a] hover:bg-gray-50 transition-colors rounded-md px-4 py-2 font-medium",
+      "accent": "bg-[#2563b8] text-white hover:bg-[#1d4ed8] transition-colors rounded-md px-4 py-2 font-medium shadow-sm"
+    },
+    "inputs": {
+      "base": "w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563b8] focus:border-transparent bg-white text-gray-900"
+    },
+    "tables": {
+      "header": "bg-[#f2ede6] text-[#4b5563] font-semibold text-sm uppercase tracking-wider",
+      "row": "border-b border-gray-200 hover:bg-gray-50 transition-colors",
+      "cell": "px-6 py-4 text-sm text-gray-700"
+    },
+    "badges": {
+      "base": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+    },
+    "navigation": {
+      "item": "flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors text-white/80 hover:bg-white/10 hover:text-white",
+      "item_active": "flex items-center px-4 py-3 text-sm font-medium rounded-md bg-[#2563b8] text-white"
+    }
+  },
+  "icons": {
+    "library": "lucide-react",
+    "instructions": "Use lucide-react for all standard icons (Dashboard, Briefcase, Kanban, Clock, DollarSign, Settings). Keep icon size consistent (e.g., w-5 h-5 for sidebar, w-4 h-4 for small buttons)."
+  },
+  "media": {
+    "images": [
+      {
+        "url": "https://images.pexels.com/photos/7363096/pexels-photo-7363096.jpeg",
+        "description": "Delivery driver in vehicle, useful for avatars or onboarding illustration",
+        "category": "driver_avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1762232621733-00adabb76518",
+        "description": "Truck on the road, good for empty states or hero headers in specific pages",
+        "category": "background_hero"
+      }
+    ],
+    "guidelines": "Do not use placeholder images. Use provided media URLs or simple, clean SVGs / lucide-react icons."
+  },
+  "accessibility": {
+    "contrast": "Ensure text contrast passes AA standard. Especially check white text on #2563b8 and #1e2d5a.",
+    "interactions": "All interactive elements must have data-testid. Focus states must ring-2 with #2563b8."
+  },
+  "animation_and_motion": {
+    "hover": "Use subtle transition-colors duration-200 for buttons, links, and table rows.",
+    "modals": "Slide-in from the right for the Company Profile Drawer. Fade-in for standard modals."
+  },
+  "instructions_to_main_agent": [
+    "Build a robust layout with a fixed left sidebar and a flexible main content area.",
+    "Implement the Dashboard with KPI cards summarizing active apps, waitlisted, earnings, etc.",
+    "Companies page must have a data table and a card-based toggle, with a slide-out right drawer for 'Company Profile' using the #f2ede6 backgrounds for sections inside the drawer.",
+    "Add Company form must map to the reference: toggles for states, multi-select chips for 'Work Model', 'Service Type', and 'Vehicles'.",
+    "Implement a Kanban board for 'Pipeline' tracking application statuses (Applied, Waiting, Active, etc.).",
+    "Use Shadcn UI combined with Recharts for the Earnings Tracker page.",
+    "Strictly adhere to the color palette. Background of the app is #e8e4dc, cards are #ffffff, sidebar is #1e2d5a.",
+    "All navigation and core actions must be tagged with data-testid."
+  ]
+}
