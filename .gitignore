@@ -92,3 +92,7 @@ memory/test_credentials.md
 
 # Test reports (may contain credentials)
 test_reports/
+-e 
+# Environment files
+*.env
+*.env.*
