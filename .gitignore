@@ -82,6 +82,20 @@ memory/test_credentials.md
 android-sdk/frontend/node_modules/.cache/default-development/4.pack
 frontend/node_modules/.cache/default-development/4.pack
 frontend/node_modules/.cache/default-development/12.pack
+
+# Environment files (secrets)
+*.env
+*.env.*
+
+# Credential files
+memory/test_credentials.md
+
+# Test reports (may contain credentials)
+test_reports/
+-e 
+# Environment files
+*.env
+*.env.*
 -e 
 # Environment files
 *.env
