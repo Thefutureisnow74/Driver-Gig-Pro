@@ -3,6 +3,7 @@ import { C, STATUS_COLORS, PRIORITY_COLORS, ALL_STATES, ALL_MODELS, ALL_SERVICES
 import { StatusBadge, PriorityBadge, BtnPrimary, Card } from './components';
 import CompanyCard from './CompanyCard';
 import HandlerCombobox from './HandlerCombobox';
+import { apiCreateCompany, apiUpdateCompany, apiDeleteCompany, apiCreateActivity } from './api';
 
 function SearchableDropdown({ value, onChange, options, placeholder }) {
   const [open, setOpen] = useState(false);
@@ -247,9 +248,16 @@ export default function Companies({ companies, setCompanies, activities, setActi
   const clearAll = () => { setFilterStatus(''); setFilterState([]); setFilterModel([]); setFilterVehicle([]); setFilterService([]); setSearch(''); };
   const hasFilters = filterStatus || filterState.length || filterModel.length || filterVehicle.length || filterService.length || search;
 
-  const handleSave = (updated) => {
-    setCompanies(prev => prev.map(c => c.id === updated.id ? updated : c));
-    setSelected(updated);
+  const handleSave = async (updated) => {
+    try {
+      const saved = await apiUpdateCompany(updated.id, updated);
+      setCompanies(prev => prev.map(c => c.id === saved.id ? saved : c));
+      setSelected(saved);
+    } catch (err) {
+      console.error('Save failed:', err);
+      setCompanies(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setSelected(updated);
+    }
   };
 
   const handleVideoUpdate = (updated) => {
@@ -257,15 +265,35 @@ export default function Companies({ companies, setCompanies, activities, setActi
     if (selected?.id === updated.id) setSelected(updated);
   };
 
-  const handleLogActivity = (entry) => {
-    setActivities(prev => [entry, ...prev]);
+  const handleLogActivity = async (entry) => {
+    try {
+      const saved = await apiCreateActivity(entry);
+      setActivities(prev => [saved, ...prev]);
+    } catch (err) {
+      console.error('Log activity failed:', err);
+      setActivities(prev => [entry, ...prev]);
+    }
   };
 
-  const handleAddCompany = (newCo) => {
-    const co = { ...newCo, id: 'c' + Date.now(), color: '#2563b8', createdAt: new Date().toISOString().split('T')[0], lastModified: new Date().toISOString().split('T')[0] };
-    setCompanies(prev => [...prev, co]);
-    setAddOpen(false);
-    setSelected(co);
+  const handleAddCompany = async (newCo) => {
+    try {
+      const saved = await apiCreateCompany(newCo);
+      setCompanies(prev => [...prev, saved]);
+      setAddOpen(false);
+      setSelected(saved);
+    } catch (err) {
+      console.error('Add company failed:', err);
+    }
+  };
+
+  const handleDeleteCompany = async (id) => {
+    try {
+      await apiDeleteCompany(id);
+      setCompanies(prev => prev.filter(c => c.id !== id));
+      if (selected?.id === id) setSelected(null);
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   };
 
   const s = {
@@ -392,7 +420,7 @@ export default function Companies({ companies, setCompanies, activities, setActi
                   <td style={s.td}><PriorityBadge priority={co.priority} /></td>
                   <td style={{ ...s.td, fontSize: 11, fontWeight: 700, color: C.navy }}>{co.activeStates?.includes('ALL_50') ? 'All 50' : (co.activeStates?.slice(0,3).join(', ') + (co.activeStates?.length > 3 ? ` +${co.activeStates.length - 3}` : ''))}</td>
                   <td style={{ ...s.td, fontSize: 12, color: '#666' }}>{co.handler || '—'}</td>
-                  <td style={{ ...s.td, fontSize: 11, color: '#aaa' }}>{co.lastModified || '—'}</td>
+                  <td style={{ ...s.td, fontSize: 11, color: '#aaa' }}>{co.lastModified ? new Date(co.lastModified).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -585,6 +613,7 @@ export default function Companies({ companies, setCompanies, activities, setActi
               handlers={handlers}
               onHandlersChange={setHandlers}
               onSave={handleSave}
+              onDelete={handleDeleteCompany}
               onLogActivity={handleLogActivity}
               onClose={() => setSelected(null)}
             />
@@ -618,12 +647,8 @@ function AddCompanyForm({ handlers, onHandlersChange, onSave, onClose }) {
     if (!form.name.trim()) { alert('Enter a company name first'); return; }
     setAiLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/ai/company-autofill`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_name: form.name.trim() }),
-      });
-      const json = await res.json();
+      const { aiCompanyAutofill } = await import('./api');
+      const json = await aiCompanyAutofill(form.name.trim());
       if (json.success && json.data) {
         const d = json.data;
         setForm(f => ({

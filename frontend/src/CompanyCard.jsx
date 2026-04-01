@@ -12,7 +12,7 @@ const AI_MSGS = {
   Overdue:     'OVERDUE — This company needs immediate follow-up. Contact them today.',
 };
 
-export default function CompanyCard({ company, activities, handlers, onHandlersChange, onSave, onLogActivity, onClose }) {
+export default function CompanyCard({ company, activities, handlers, onHandlersChange, onSave, onDelete, onLogActivity, onClose }) {
   const [form, setForm] = useState({ ...company });
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -89,22 +89,22 @@ export default function CompanyCard({ company, activities, handlers, onHandlersC
     return [...activeSet].sort().slice(0,3).join(', ') + ` + ${activeSet.size - 3} more`;
   };
 
-  const save = () => {
+  const save = async () => {
     setSaving(true);
-    setTimeout(() => {
-      onSave({ ...form, documents: docs, lastModified: new Date().toISOString().split('T')[0] });
+    try {
+      await onSave({ ...form, documents: docs });
       setDirty(false);
-      setSaving(false);
       setSavedMsg(true);
       setTimeout(() => setSavedMsg(false), 2500);
-    }, 400);
+    } catch (err) {
+      console.error('Save failed:', err);
+    }
+    setSaving(false);
   };
 
   const submitLog = () => {
     if (!logForm.notes.trim()) { alert('Please add notes about this activity.'); return; }
-    const now = new Date();
-    const dateTime = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    onLogActivity({ ...logForm, companyId: company.id, companyName: form.name, dateTime, id: 'a' + Date.now() });
+    onLogActivity({ ...logForm, companyId: company.id, companyName: form.name });
     setLogForm({ type: 'Phone', outcome: 'Interested', handler: handlers[0], notes: '', nextAction: '' });
     setLogOpen(false);
     setDirty(true);

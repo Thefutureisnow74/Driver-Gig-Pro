@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { id: 'settings',       label: 'Settings',        icon: '⚙'  },
 ];
 
-export default function Sidebar({ page, setPage, user }) {
+export default function Sidebar({ page, setPage, user, onLogout }) {
   const s = {
     sidebar: { width: 260, minWidth: 260, background: C.navy, display: 'flex', flexDirection: 'column', height: '100vh', flexShrink: 0 },
     logo: { padding: '20px 18px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: '1px solid rgba(255,255,255,.1)' },
@@ -64,7 +64,7 @@ export default function Sidebar({ page, setPage, user }) {
           <div style={s.userName}>{user?.name || 'King Solomon'}</div>
           <div style={s.userEmail}>{user?.email || 'cfmbusiness@gmail.com'}</div>
         </div>
-        <button style={s.logoutBtn}>→</button>
+        <button data-testid="logout-btn" onClick={onLogout} style={s.logoutBtn} title="Sign Out">→</button>
       </div>
     </div>
   );

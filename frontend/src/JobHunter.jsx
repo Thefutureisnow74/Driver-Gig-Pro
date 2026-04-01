@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { C, ALL_SERVICES, ALL_VEHICLES, ALL_STATES } from './theme';
 import { BtnPrimary, BtnSecondary } from './components';
-
-const API = process.env.REACT_APP_BACKEND_URL;
+import { aiSearchJobs, aiAutoPilot, aiDraftOutreach, apiCreateCompany, apiCreateActivity } from './api';
 
 const SEARCH_SOURCES = ['Craigslist', 'Indeed', 'CBDriver.com', 'Google Search', 'LinkedIn', 'Other'];
 const POPULAR_STATES = ['TX','CA','FL','NY','IL','GA','AZ','NC','OH','PA','WA','CO','TN','NV','OR','VA','MA','MN','WI','MO','IN','NJ','MI','MD'];
@@ -223,8 +222,7 @@ export default function JobHunter({ companies, setCompanies, activities, setActi
   const handleSearch = async () => {
     setLoading(true); setLoadingMsg('AI is scanning job boards and finding opportunities...'); setStep(2);
     try {
-      const res = await fetch(`${API}/api/ai/search-jobs`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service_types: serviceTypes, vehicles, states, sources, keywords: selectedKeywords.join('\n') }) });
-      const data = await res.json();
+      const data = await aiSearchJobs({ serviceTypes, vehicles, states, sources, keywords: selectedKeywords.join('\n') });
       if (data.success && data.data) { setSearchResults(data.data.results || []); setSearchUrls(data.data.searchUrls || {}); setSearchSummary(data.data.summary || ''); }
     } catch (e) { console.error(e); }
     setLoading(false); setLoadingMsg(''); setTracker(p => ({ ...p, searches: p.searches + 1 }));
@@ -233,8 +231,7 @@ export default function JobHunter({ companies, setCompanies, activities, setActi
   const handleAutoPilot = async () => {
     setLoading(true); setLoadingMsg('Auto-Pilot engaged — searching, ranking, and drafting outreach...'); setAutoPilot(true); setStep(2);
     try {
-      const res = await fetch(`${API}/api/ai/auto-pilot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ service_types: serviceTypes, vehicles, states, sources, user_name: user?.name || '', user_info: user?.additionalInfo || '', keywords: selectedKeywords.join('\n') }) });
-      const data = await res.json();
+      const data = await aiAutoPilot({ serviceTypes, vehicles, states, sources, userName: user?.name || '', userInfo: user?.additionalInfo || '', keywords: selectedKeywords.join('\n') });
       if (data.success && data.data) { setSearchResults(data.data.results || []); setSearchUrls(data.data.searchUrls || {}); setSearchSummary(data.data.summary || ''); }
     } catch (e) { console.error(e); }
     setLoading(false); setLoadingMsg(''); setTracker(p => ({ ...p, searches: p.searches + 1 }));
@@ -244,25 +241,43 @@ export default function JobHunter({ companies, setCompanies, activities, setActi
     setSelectedJob(job); if (job.outreach) { setOutreach(job.outreach); setStep(3); return; }
     setOutreachLoading(true); setStep(3);
     try {
-      const res = await fetch(`${API}/api/ai/draft-outreach`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ job, user_name: user?.name || '', user_info: user?.additionalInfo || '', type: 'email' }) });
-      const data = await res.json();
+      const data = await aiDraftOutreach({ job, user_name: user?.name || '', user_info: user?.additionalInfo || '', type: 'email' });
       if (data.success && data.data) setOutreach(data.data);
     } catch (e) { console.error(e); }
     setOutreachLoading(false);
   };
 
-  const handleAddToCRM = (job) => {
+  const handleAddToCRM = async (job) => {
     if (companies.find(c => c.name.toLowerCase() === job.company.toLowerCase())) { alert(`"${job.company}" already in CRM.`); return; }
-    setCompanies(p => [{ id: 'jh_' + Date.now(), name: job.company, website: job.url || '', mainPhone: '', activeStates: states, workModel: job.workModel ? [job.workModel] : [], serviceType: serviceTypes.slice(0, 3), vehicles, status: '', priority: job.matchScore >= 85 ? 'High' : job.matchScore >= 60 ? 'Medium' : 'Low', handler: user?.name || 'Unassigned', followUp: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0], signupUrl: job.url || '', notes: `Found via AI Job Hunter on ${job.source}. ${job.description || ''} Pay: ${job.payEstimate || 'N/A'}`, contactName: '', contactTitle: '', contactEmail: '', contactPhone: '', contactLinkedin: '', contactMethod: 'Email', vehicleOther: '', serviceOther: '', createdAt: new Date().toISOString().split('T')[0], lastModified: new Date().toISOString().split('T')[0] }, ...p]);
-    setTracker(p => ({ ...p, added: p.added + 1 })); alert(`"${job.company}" added to CRM!`);
+    try {
+      const saved = await apiCreateCompany({
+        name: job.company, website: job.url || '', mainPhone: '', activeStates: states,
+        workModel: job.workModel ? [job.workModel] : [], serviceType: serviceTypes.slice(0, 3),
+        vehicles, status: 'Researching', priority: job.matchScore >= 85 ? 'High' : job.matchScore >= 60 ? 'Medium' : 'Low',
+        handler: user?.name || 'Unassigned', followUp: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+        signupUrl: job.url || '',
+        notes: `Found via AI Job Hunter on ${job.source}. ${job.description || ''} Pay: ${job.payEstimate || 'N/A'}`,
+        contactName: '', contactTitle: '', contactEmail: '', contactPhone: '', contactLinkedin: '', contactMethod: 'Email',
+        vehicleOther: '', serviceOther: ''
+      });
+      setCompanies(p => [saved, ...p]);
+      setTracker(p => ({ ...p, added: p.added + 1 })); alert(`"${job.company}" added to CRM!`);
+    } catch (e) { console.error(e); alert('Failed to add to CRM.'); }
   };
 
-  const handleLogOutreach = () => {
+  const handleLogOutreach = async () => {
     if (!selectedJob || !outreach) return;
-    const now = new Date();
-    setActivities(p => [{ id: 'jho_' + Date.now(), companyId: '', companyName: selectedJob.company, type: 'Email', outcome: 'Sent', direction: 'Sent', status: 'Awaiting Reply', handler: user?.name || '', subject: outreach.subject || '', notes: outreach.body || '', dateTime: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), date: now.toISOString().split('T')[0], nextAction: outreach.followUpNote || '' }, ...p]);
-    setTracker(p => ({ ...p, outreachSent: p.outreachSent + 1 })); alert('Outreach logged to Communications!');
-    setStep(2); setOutreach(null); setSelectedJob(null);
+    try {
+      const saved = await apiCreateActivity({
+        companyId: '', companyName: selectedJob.company, type: 'Email',
+        outcome: 'Sent', handler: user?.name || '',
+        notes: `Subject: ${outreach.subject || ''}\n\n${outreach.body || ''}`,
+        nextAction: outreach.followUpNote || ''
+      });
+      setActivities(p => [saved, ...p]);
+      setTracker(p => ({ ...p, outreachSent: p.outreachSent + 1 })); alert('Outreach logged to Communications!');
+      setStep(2); setOutreach(null); setSelectedJob(null);
+    } catch (e) { console.error(e); alert('Failed to log outreach.'); }
   };
 
   const handleLogOutreachDirect = (job, od) => {

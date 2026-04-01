@@ -3,6 +3,7 @@ import { C, STATUSES, LOG_OUTCOMES } from './theme';
 import { StatusBadge, PriorityBadge, Card, BtnPrimary, BtnSecondary } from './components';
 import HandlerCombobox from './HandlerCombobox';
 import CompanyCard from './CompanyCard';
+import { apiUpdateHandlers, apiRenameHandler, apiUpdateProfile } from './api';
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────
 export function Dashboard({ companies, activities, setPage, setCompanies }) {
@@ -476,21 +477,48 @@ export function Communications({ companies, setCompanies, activities, setActivit
 
 // ── EARNINGS TRACKER ────────────────────────────────────────────────────
 // ── SETTINGS ─────────────────────────────────────────────────────────────
-export function Settings({ handlers, setHandlers, user, setUser }) {
+export function Settings({ handlers, setHandlers, user, setUser, onSeed, onLogout, companies }) {
   const [newHandler, setNewHandler] = useState('');
   const [tab, setTab] = useState('personal');
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({ ...user });
+  const [seeding, setSeeding] = useState(false);
 
-  const addHandler = () => { if (!newHandler.trim()) return; if (!handlers.includes(newHandler.trim())) setHandlers(prev=>[...prev, newHandler.trim()]); setNewHandler(''); };
-  const renameH = (i) => { const n=prompt(`Rename "${handlers[i]}" to:`, handlers[i]); if (!n||n===handlers[i]) return; setHandlers(prev=>prev.map((h,idx)=>idx===i?n:h)); };
-  const deleteH = (i) => { if (!window.confirm(`Delete "${handlers[i]}"?`)) return; setHandlers(prev=>prev.filter((_,idx)=>idx!==i)); };
+  const addHandler = async () => {
+    if (!newHandler.trim()) return;
+    if (!handlers.includes(newHandler.trim())) {
+      const updated = [...handlers, newHandler.trim()];
+      setHandlers(updated);
+      try { await apiUpdateHandlers(updated); } catch (e) { console.error(e); }
+    }
+    setNewHandler('');
+  };
+  const renameH = async (i) => {
+    const n = prompt(`Rename "${handlers[i]}" to:`, handlers[i]);
+    if (!n || n === handlers[i]) return;
+    const old = handlers[i];
+    setHandlers(prev => prev.map((h, idx) => idx === i ? n : h));
+    try { await apiRenameHandler(old, n); } catch (e) { console.error(e); }
+  };
+  const deleteH = async (i) => {
+    if (!window.confirm(`Delete "${handlers[i]}"?`)) return;
+    const updated = handlers.filter((_, idx) => idx !== i);
+    setHandlers(updated);
+    try { await apiUpdateHandlers(updated); } catch (e) { console.error(e); }
+  };
 
-  const saveProfile = () => {
+  const saveProfile = async () => {
     const updated = { ...profile, name: `${profile.firstName} ${profile.lastName}`.trim() };
     setUser(updated);
     setProfile(updated);
     setEditing(false);
+    try { await apiUpdateProfile({ name: updated.name, primaryVehicle: updated.primaryVehicle || '', primaryMarket: updated.primaryMarket || '' }); } catch (e) { console.error(e); }
+  };
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    try { await onSeed(); } catch {}
+    setSeeding(false);
   };
 
   const toggleIndustry = (ind) => setProfile(p => ({ ...p, industries: p.industries?.includes(ind) ? p.industries.filter(i=>i!==ind) : [...(p.industries||[]), ind] }));
@@ -714,11 +742,21 @@ export function Settings({ handlers, setHandlers, user, setUser }) {
       {/* Data Management */}
       <div style={fc}>
         <div style={{ fontSize:13, fontWeight:700, color:C.navy, marginBottom:14, paddingBottom:10, borderBottom:'1px solid #f0ece4' }}>Data Management</div>
-        <div style={{ display:'flex', gap:10 }}>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+          {(!companies || companies.length === 0) && (
+            <button data-testid="seed-data-btn" onClick={handleSeed} disabled={seeding} style={{ padding:'9px 18px', border:'1.5px solid #2e7d32', borderRadius:8, background:seeding ? '#ccc' : '#e8f5e9', color:'#2e7d32', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              {seeding ? 'Loading...' : '⊕ Load 10 Sample Companies'}
+            </button>
+          )}
           {['↓ Export All Data (CSV)','↑ Import Companies (CSV)'].map(label => (
             <button key={label} style={{ padding:'9px 18px', border:'1.5px solid #ddd', borderRadius:8, background:'#fff', color:'#555', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}>{label}</button>
           ))}
         </div>
+      </div>
+
+      {/* Sign Out */}
+      <div style={{ ...fc, textAlign:'center' }}>
+        <button data-testid="signout-btn" onClick={onLogout} style={{ padding:'10px 32px', border:'1.5px solid #c62828', borderRadius:8, background:'#fff', color:'#c62828', fontSize:13, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>Sign Out</button>
       </div>
     </div>
   );
